@@ -69,6 +69,32 @@ class: center, middle
 
 # What is going on here?
 
+- instead of using `ember server --proxy http://local.api.host:8080`
+
+- write `index.html` to redis on each ember-cli build
+
+- API app reads `index.html` out of redis and serves it
+
+```ruby
+require 'sinatra'
+require 'redis'
+
+def bootstrap_index
+  redis = Redis.new
+  index_key = redis.get('<your-project-name>:current')
+  redis.get(index_key)
+end
+
+get '/' do
+  content_type 'text/html'
+  bootstrap_index
+end
+```
+
+---
+
+# What is going on here?
+
 ![unsure if troll](images/trolling.jpg)
 
 ---
