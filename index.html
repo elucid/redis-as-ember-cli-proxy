@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ember-cli redis proxy</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Using Redis as a proxy with ember-cli
+
+---
+
+# Agenda
+
+1. What is going on here?
+
+2. Why do this?
+
+3. How it works
+
+4. Caveats
+
+5. The future
+
+---
+
+# What is going on here?
+
+---
+
+# What is going on here?
+
+- instead of using `ember server --proxy http://local.api.host:8080`
+
+---
+
+# What is going on here?
+
+- instead of using `ember server --proxy http://local.api.host:8080`
+
+- write `index.html` to redis on each ember-cli build
+
+---
+
+# What is going on here?
+
+- instead of using `ember server --proxy http://local.api.host:8080`
+
+- write `index.html` to redis on each ember-cli build
+
+- API app reads `index.html` out of redis and serves it
+
+---
+
+# What is going on here?
+
+![unsure if troll](images/trolling.jpg)
+
+---
+
+# Why do this?
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+- need to serialize per-user state into initial payload
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+- need to serialize per-user state into initial payload
+
+  - session info
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+- need to serialize per-user state into initial payload
+
+  - session info
+
+  - model data needed to bootstrap page
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+- need to serialize per-user state into initial payload
+
+  - session info
+
+  - model data needed to bootstrap page
+
+- both require proxying ember app through Rails/Django/Express app
+
+---
+
+# Why do this?
+
+- login page is in the API app
+
+  - and you can't or don't want to change that
+
+- need to serialize per-user state into initial payload
+
+  - session info
+
+  - model data needed to bootstrap page
+
+- both require proxying ember app through Rails/Django/Express app
+
+- provides development workflow for apps using "Lightning Fast Deployment" model
+
+---
+
+# Lightning Fast Deployment of *-backed Javascript Apps
+
+---
+
+# Lightning Fast Deployment of *-backed Javascript Apps
+
+- check out Luke Melia's RailsConf 2014 presentation
+
+  - [slides](https://speakerdeck.com/lukemelia/lightning-fast-deployment-of-your-rails-backed-javascript-app)
+  - [video](https://www.youtube.com/watch?v=QZVYP3cPcWQ)
+
+---
+
+# Lightning Fast Deployment of *-backed Javascript Apps
+
+- check out Luke Melia's RailsConf 2014 presentation
+
+  - [slides](https://speakerdeck.com/lukemelia/lightning-fast-deployment-of-your-rails-backed-javascript-app)
+  - [video](https://www.youtube.com/watch?v=QZVYP3cPcWQ)
+
+- or Luke Melia's EmberConf 2015 presentation
+
+  - [slides](https://speakerdeck.com/lukemelia/the-art-of-ember-app-deployment)
+  - [video](https://www.youtube.com/watch?v=4EDetv_Rw5U)
+
+---
+
+# Lightning Fast Deployment of *-backed Javascript Apps
+
+- check out Luke Melia's RailsConf 2014 presentation
+
+  - [slides](https://speakerdeck.com/lukemelia/lightning-fast-deployment-of-your-rails-backed-javascript-app)
+  - [video](https://www.youtube.com/watch?v=QZVYP3cPcWQ)
+
+- or Luke Melia's EmberConf 2015 presentation
+
+  - [slides](https://speakerdeck.com/lukemelia/the-art-of-ember-app-deployment)
+  - [video](https://www.youtube.com/watch?v=4EDetv_Rw5U)
+
+- and of course [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy)
+
+---
+
+# How it works
+
+---
+
+# How it works
+
+- I made a little addon [ember-cli-redis-proxy](https://github.com/elucid/ember-cli-redis-proxy)
+
+---
+
+# How it works
+
+- uses configuration as per [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy)
+
+```javascript
+// config/deploy.js
+module.exports = {
+  development: {
+    buildEnv: 'development',
+    store: {
+      type: 'redis',  // this can be omitted because it is the default
+      host: 'localhost',
+      port: 6379
+    },
+    assets: {
+      // ...
+    }
+  },
+
+  // other environments
+};
+```
+
+---
+
+# How it works
+
+- uses configuration as per [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy)
+
+  - (doesn't actually share implementation details with [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy))
+
+---
+
+# How it works
+
+- uses ember-cli addon `postBuild` hook to write `index.html` build output to redis
+
+???
+
+- note on difficulty figuring this out
+
+---
+
+# Caveats
+
+---
+
+# Caveats
+
+- need to setup fingerprinting in development mode
+
+---
+
+# Caveats
+
+- need to setup fingerprinting in development mode
+
+```javascript
+
+// Brocfile.js
+var EmberApp = require('ember-cli/lib/broccoli/ember-app');
+
+var fingerprintOptions = {
+  enabled: true,
+  extensions: ['js', 'css', 'png', 'jpg', 'gif']
+};
+
+var env = process.env.EMBER_ENV || 'development';
+
+switch (env) {
+  case 'development':
+    fingerprintOptions.prepend = 'http://localhost:4200/';
+    break;
+  case 'production':
+    fingerprintOptions.prepend = 'https://your.cdn.com/';
+    break;
+}
+
+var app = new EmberApp({
+  fingerprint: fingerprintOptions
+});
+```
+
+---
+
+# Caveats
+
+- ember-cli-inject-live-reload doesn't work properly
+
+---
+
+# Caveats
+
+- ember-cli-inject-live-reload doesn't work properly without hacks
+
+---
+
+# The Future
+
+---
+
+# The Future
+
+- possible addition to [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy)
+
+---
+
+# The Future
+
+- possible addition to [ember-cli-deploy](https://github.com/ember-cli/ember-cli-deploy)
+
+- possible addition to [ember-deploy-redis](https://github.com/LevelbossMike/ember-deploy-redis)
+
+---
+
+# Thanks
+
+- Justin Giancola
+
+- [@elucid](https://twitter.com/elucid)
+
+- [elucid](https://github.com/elucid)
+
+- <justin@precisionnutrition.com>
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
